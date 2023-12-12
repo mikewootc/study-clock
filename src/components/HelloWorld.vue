@@ -13,7 +13,7 @@ const currTimeShow24h = ref(getCur24hTime());
 const currTimeShow12h = ref(getCur12hTime());
 const workMode = ref(WorkMode.Normal);
 // 每个番茄钟时长
-const pomodoroDurationMinutes = 1;
+const pomodoroDurationMinutes = 15;
 const pomodoroStartTimeStampMs = ref(0);
 const pomodoroRemainingTimeMs = ref(0);
 const pomodoroCnt = ref(0);
@@ -96,8 +96,8 @@ setInterval(() => {
   <div v-if="workMode === WorkMode.Normal">
     <!-- 显示当前数字时钟, 格式为: HH:MM:SS -->
     <!-- <p style="width: 800px; font-size: 100px; color: #333">{{ currTimeShow24h }} ^_^</p> -->
-    <p style="width: 800px; font-size: 100px; color: #333">{{ currTimeShow12h }}</p>
-    <p style="width: 800px; font-size: 20px; color: #333">
+    <p class="text-clock-time">{{ currTimeShow12h }}</p>
+    <p class="text-pomodoro-cnt">
       番茄钟: {{ pomodoroCnt }}
     </p>
     <el-button type="primary" @click="startPomodoro">开始专注</el-button>
@@ -105,7 +105,7 @@ setInterval(() => {
   </div>
   <div v-else>
     <!-- 显示番茄时钟, 格式为: 25:00:00 -->
-    <p style="width: 800px; font-size: 100px; color: #333">{{getPomodoroRemainingTimeShow()}} ^_^</p>
+    <p class="text-clock-time">{{getPomodoroRemainingTimeShow()}} ^_^</p>
     <el-button type="primary" @click="setWorkMode(WorkMode.Normal)">放弃专注</el-button>
   </div>
 </template>
@@ -113,5 +113,11 @@ setInterval(() => {
 <style scoped>
 .read-the-docs {
   color: #888;
+}
+.text-clock-time {
+  font-size: 3em;
+}
+.text-pomodoro-cnt {
+  font-size: 1.5em;
 }
 </style>
