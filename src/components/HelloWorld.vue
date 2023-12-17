@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Assets from '@/assets'
 
 defineProps<{ msg: string }>()
 
@@ -17,6 +18,10 @@ const pomodoroDurationMinutes = 15;
 const pomodoroStartTimeStampMs = ref(0);
 const pomodoroRemainingTimeMs = ref(0);
 const pomodoroCnt = ref(0);
+const soundSuccess = ref(Assets.sounds.success);
+console.log(soundSuccess.value);
+const soundSuccessRef = ref<HTMLAudioElement>();
+
 
 // 返回当前时间, 格式为: HH:MM:SS
 function getCur24hTime() {
@@ -47,6 +52,15 @@ function startPomodoro() {
   setWorkMode(WorkMode.Pomodoro);
   // 计算剩余时间
   calcPomodoroRemainingTimeMs();
+}
+
+// 停止番茄钟
+function stopPomodoro() {
+  setWorkMode(WorkMode.Normal);
+  //if (soundSuccessRef.value) {
+  //  soundSuccessRef.value.pause();
+  //  soundSuccessRef.value.currentTime = 0;
+  //}
 }
 
 // 计算番茄钟剩余时长
@@ -84,8 +98,10 @@ setInterval(() => {
   if (workMode.value === WorkMode.Pomodoro) {
     calcPomodoroRemainingTimeMs();
     if (pomodoroRemainingTimeMs.value <= 0) {
+      // 番茄钟时间到
       setWorkMode(WorkMode.Normal);
       pomodoroCnt.value++;
+      soundSuccessRef.value?.play();
     }
   }
 }, 100);
@@ -106,8 +122,10 @@ setInterval(() => {
   <div v-else>
     <!-- 显示番茄时钟, 格式为: 25:00:00 -->
     <p class="text-clock-time">{{getPomodoroRemainingTimeShow()}} ^_^</p>
-    <el-button type="primary" @click="setWorkMode(WorkMode.Normal)">放弃专注</el-button>
+    <el-button type="primary" @click="stopPomodoro">放弃专注</el-button>
   </div>
+
+  <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" autoplay="false"></audio>
 </template>
 
 <style scoped>
