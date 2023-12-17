@@ -1,0 +1,7 @@
+{
+  "name": "study-clock",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom"
+}

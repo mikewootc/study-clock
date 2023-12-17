@@ -132,8 +132,8 @@ setInterval(() => {
     <el-button type="primary" @click="stopPomodoro">放弃专注</el-button>
   </div>
 
-  <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" autoplay="false"></audio>
-  <audio ref="soundFailRef" :src="soundFail" :controls="false" autoplay="false"></audio>
+  <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" :autoplay="false"></audio>
+  <audio ref="soundFailRef" :src="soundFail" :controls="false" :autoplay="false"></audio>
 </template>
 
 <style scoped>
