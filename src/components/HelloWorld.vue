@@ -19,8 +19,10 @@ const pomodoroStartTimeStampMs = ref(0);
 const pomodoroRemainingTimeMs = ref(0);
 const pomodoroCnt = ref(0);
 const soundSuccess = ref(Assets.sounds.success);
+const soundFail = ref(Assets.sounds.fail);
 console.log(soundSuccess.value);
 const soundSuccessRef = ref<HTMLAudioElement>();
+const soundFailRef = ref<HTMLAudioElement>();
 
 
 // 返回当前时间, 格式为: HH:MM:SS
@@ -35,10 +37,14 @@ function getCur24hTime() {
 // 返回当前时间, 格式为: 上午/下午/晚上 HH:MM:SS
 function getCur12hTime() {
   const date = new Date();
-  const hour12 = ('0' + date.getHours() % 12).slice(-2);
+  let hour12 = ('0' + date.getHours() % 12).slice(-2);
   const minute = ('0' + date.getMinutes()).slice(-2);
   const second = ('0' + date.getSeconds()).slice(-2);
   const amPm = date.getHours() < 12 ? 'AM' : 'PM';
+  if (amPm == 'PM' && hour12 == '00') {
+    // 如果是下午 12点, 则显示为12点, 而不是00点
+    hour12 = '12';
+  }
   return `${hour12}:${minute}:${second} ${amPm}`;
 }
 
@@ -57,6 +63,7 @@ function startPomodoro() {
 // 停止番茄钟
 function stopPomodoro() {
   setWorkMode(WorkMode.Normal);
+  soundFailRef.value?.play();
   //if (soundSuccessRef.value) {
   //  soundSuccessRef.value.pause();
   //  soundSuccessRef.value.currentTime = 0;
@@ -126,6 +133,7 @@ setInterval(() => {
   </div>
 
   <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" autoplay="false"></audio>
+  <audio ref="soundFailRef" :src="soundFail" :controls="false" autoplay="false"></audio>
 </template>
 
 <style scoped>
