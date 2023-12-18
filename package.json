@@ -9,7 +9,7 @@
     "build": "vue-tsc && vite build",
     "buildf": "vite build",
     "preview": "vite preview",
-    "ionic:build": "npm run build",
+    "ionic:build": "npm run buildf",
     "ionic:serve": "npm run dev"
   },
   "dependencies": {

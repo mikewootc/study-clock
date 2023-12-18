@@ -33,6 +33,18 @@ export class PomodoroClockDexie extends Dexie {
     return liveQuery(() => this.pomodoroHistory.where('startTsMs').above(todayStartTsMs).toArray());
   }
 
+  async clearToday() {
+    logger.debug(`clearToday_. enter.`);
+    try {
+      const todayStartTsMs = new Date().setHours(0, 0, 0, 0);
+      logger.debug(`clearToday_. todayStartTsMs: `, todayStartTsMs);
+      await this.pomodoroHistory.where('startTsMs').above(todayStartTsMs).delete();
+    } catch(error) {
+        logger.error('clearToday_. error:', error);
+        throw error;
+    }
+  }
+
   get historyQuery(): Dexie.LiveQuery<PomodoroHistoryItem[]> {
     logger.debug(`historyQuery_. enter.`);
     return liveQuery(() => this.pomodoroHistory.toArray());
