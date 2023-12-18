@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Assets from '@/assets'
+import { PomodoroClock } from '@/models/PomodoroClock';
+import Utils from '@/utils/Utils';
+import Logger from 'cpclog';
+
+const logger = Logger.createWrapper('tag', Logger.LEVEL_DEBUG);
 
 defineProps<{ msg: string }>()
 
@@ -14,38 +19,36 @@ const currTimeShow24h = ref(getCur24hTime());
 const currTimeShow12h = ref(getCur12hTime());
 const workMode = ref(WorkMode.Normal);
 // 每个番茄钟时长
-const pomodoroDurationMinutes = 15;
-const pomodoroStartTimeStampMs = ref(0);
+const pomodoroDurationSec = 15 * 60;
+//const pomodoroStartTimeStampMs = ref(0);
 const pomodoroRemainingTimeMs = ref(0);
+let pomodoroClock:PomodoroClock|null = null;
 const pomodoroCnt = ref(0);
-const soundSuccess = ref(Assets.sounds.success);
-const soundFail = ref(Assets.sounds.fail);
-console.log(soundSuccess.value);
+const soundSuccess = Assets.sounds.success;
+const soundFail = Assets.sounds.fail;
+logger.debug('soundSuccess:', soundSuccess);
 const soundSuccessRef = ref<HTMLAudioElement>();
 const soundFailRef = ref<HTMLAudioElement>();
 
 
 // 返回当前时间, 格式为: HH:MM:SS
 function getCur24hTime() {
-  const date = new Date();
-  const hour = ('0' + date.getHours()).slice(-2);
-  const minute = ('0' + date.getMinutes()).slice(-2);
-  const second = ('0' + date.getSeconds()).slice(-2);
-  return `${hour}:${minute}:${second}`;
+  try {
+    return Utils.getTimeString(Date.now(), true);
+  } catch(error) {
+      logger.error('getCur24hTime_. error:', error);
+      throw error;
+  }
 }
 
 // 返回当前时间, 格式为: 上午/下午/晚上 HH:MM:SS
 function getCur12hTime() {
-  const date = new Date();
-  let hour12 = ('0' + date.getHours() % 12).slice(-2);
-  const minute = ('0' + date.getMinutes()).slice(-2);
-  const second = ('0' + date.getSeconds()).slice(-2);
-  const amPm = date.getHours() < 12 ? 'AM' : 'PM';
-  if (amPm == 'PM' && hour12 == '00') {
-    // 如果是下午 12点, 则显示为12点, 而不是00点
-    hour12 = '12';
+  try {
+    return Utils.getTimeString(Date.now(), false);
+  } catch(error) {
+      logger.error('getCur12hTime_. error:', error);
+      throw error;
   }
-  return `${hour12}:${minute}:${second} ${amPm}`;
 }
 
 function setWorkMode(mode: WorkMode) {
@@ -54,10 +57,10 @@ function setWorkMode(mode: WorkMode) {
 
 // 开始番茄钟
 function startPomodoro() {
-  pomodoroStartTimeStampMs.value = Date.now();
-  setWorkMode(WorkMode.Pomodoro);
+  pomodoroClock = new PomodoroClock(Date.now(), pomodoroDurationSec * 1000);
   // 计算剩余时间
-  calcPomodoroRemainingTimeMs();
+  pomodoroRemainingTimeMs.value = pomodoroClock.getRemainingTimeMs();
+  setWorkMode(WorkMode.Pomodoro);
 }
 
 // 停止番茄钟
@@ -68,14 +71,6 @@ function stopPomodoro() {
   //  soundSuccessRef.value.pause();
   //  soundSuccessRef.value.currentTime = 0;
   //}
-}
-
-// 计算番茄钟剩余时长
-function calcPomodoroRemainingTimeMs() {
-  const currTimeMs = Date.now();
-  const remainingTimeMs = pomodoroStartTimeStampMs.value + pomodoroDurationMinutes * 60 * 1000 - currTimeMs;
-  console.log('calc remainingTimeMs:', remainingTimeMs);
-  pomodoroRemainingTimeMs.value = remainingTimeMs;
 }
 
 // 获取番茄钟剩余时间, 格式为: MM:SS
@@ -100,10 +95,10 @@ function clearPomodoroCnt() {
 setInterval(() => {
   currTimeShow24h.value = getCur24hTime();
   currTimeShow12h.value = getCur12hTime();
-  //console.log('workMode.value', workMode.value);
   
   if (workMode.value === WorkMode.Pomodoro) {
-    calcPomodoroRemainingTimeMs();
+    pomodoroRemainingTimeMs.value = pomodoroClock ? pomodoroClock.getRemainingTimeMs() : 0;
+    //logger.debug('pomodoroRemainingTimeMs:', pomodoroRemainingTimeMs.value);
     if (pomodoroRemainingTimeMs.value <= 0) {
       // 番茄钟时间到
       setWorkMode(WorkMode.Normal);
