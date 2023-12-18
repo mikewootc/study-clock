@@ -21,4 +21,12 @@ export default class Utils {
             return `${hour12}:${minute}:${second} ${amPm}`;
         }
     }
+
+    public static getDurationString(durationMs: number): string {
+        const duration = new Date(durationMs);
+        const hours = duration.getUTCHours().toString().padStart(2, '0');
+        const minutes = duration.getUTCMinutes().toString().padStart(2, '0');
+        const seconds = duration.getUTCSeconds().toString().padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
 }

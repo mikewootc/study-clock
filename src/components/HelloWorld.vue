@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import Assets from '@/assets'
+import { ref, onMounted, onUnmounted, Ref } from 'vue';
+import Assets from '@/assets';
 import { PomodoroClock } from '@/models/PomodoroClock';
+import { PomodoroHistoryItem, dbPomodoroClock } from '@/models/DbPomodoroClock';
 import Utils from '@/utils/Utils';
 import Logger from 'cpclog';
+import { useObservable } from '@vueuse/rxjs';
+import { Subscription } from 'rxjs';
 
 const logger = Logger.createWrapper('tag', Logger.LEVEL_DEBUG);
 
@@ -18,17 +21,42 @@ enum WorkMode {
 const currTimeShow24h = ref(getCur24hTime());
 const currTimeShow12h = ref(getCur12hTime());
 const workMode = ref(WorkMode.Normal);
+
 // 每个番茄钟时长
 const pomodoroDurationSec = 15 * 60;
 //const pomodoroStartTimeStampMs = ref(0);
 const pomodoroRemainingTimeMs = ref(0);
 let pomodoroClock:PomodoroClock|null = null;
+const pomodoroHistory:Ref<PomodoroHistoryItem[]> = useObservable(
+  //dbPomodoroClock.historyQuery
+  dbPomodoroClock.historyQueryToday
+);
+let pomodoroHistorySubscription:Subscription|null = null;
 const pomodoroCnt = ref(0);
+const pomodoroTotalTimeMs = ref(0);
+
 const soundSuccess = Assets.sounds.success;
 const soundFail = Assets.sounds.fail;
 logger.debug('soundSuccess:', soundSuccess);
 const soundSuccessRef = ref<HTMLAudioElement>();
 const soundFailRef = ref<HTMLAudioElement>();
+
+onMounted(() => {
+  logger.debug('onMounted_. workMode:', workMode.value, dbPomodoroClock.historyQueryToday);
+  pomodoroHistorySubscription = dbPomodoroClock.historyQueryToday.subscribe((history:PomodoroHistoryItem[]) => {
+    if (history) {
+      logger.debug('historyQueryToday got subscription. history:', history);
+      pomodoroCnt.value = history.length;
+      pomodoroTotalTimeMs.value = history.reduce((acc, cur) => acc + cur.durationMs, 0);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (pomodoroHistorySubscription) {
+    pomodoroHistorySubscription.unsubscribe();
+  }
+});
 
 
 // 返回当前时间, 格式为: HH:MM:SS
@@ -88,7 +116,6 @@ function getPomodoroRemainingTimeShow() {
 }
 
 function clearPomodoroCnt() {
-  pomodoroCnt.value = 0;
 }
 
 // 设置定时器, 每100ms更新当前时间
@@ -102,11 +129,14 @@ setInterval(() => {
     if (pomodoroRemainingTimeMs.value <= 0) {
       // 番茄钟时间到
       setWorkMode(WorkMode.Normal);
-      pomodoroCnt.value++;
+      if (pomodoroClock) {
+        dbPomodoroClock.addPomodoroHistoryItem({startTsMs: pomodoroClock.startTsMs, durationMs: pomodoroClock.durationMs});
+      }
       soundSuccessRef.value?.play();
     }
   }
 }, 100);
+
 </script>
 
 <template>
@@ -116,7 +146,7 @@ setInterval(() => {
     <!-- <p style="width: 800px; font-size: 100px; color: #333">{{ currTimeShow24h }} ^_^</p> -->
     <p class="text-clock-time">{{ currTimeShow12h }}</p>
     <p class="text-pomodoro-cnt">
-      番茄钟: {{ pomodoroCnt }}
+      番茄钟数: {{ pomodoroCnt }} 总时长 {{ Utils.getDurationString(pomodoroTotalTimeMs) }}
     </p>
     <el-button type="primary" @click="startPomodoro">开始专注</el-button>
     <el-button type="primary" @click="clearPomodoroCnt">清零</el-button>
@@ -126,6 +156,15 @@ setInterval(() => {
     <p class="text-clock-time">{{getPomodoroRemainingTimeShow()}} ^_^</p>
     <el-button type="primary" @click="stopPomodoro">放弃专注</el-button>
   </div>
+
+  <ul>
+    <li v-for="item in pomodoroHistory" :key="item.id">
+      <p>
+        开始时间: {{ Utils.getTimeString(item.startTsMs) }}, 
+        持续时间: {{ Math.floor(item.durationMs / 1000 / 60) }} 分钟
+      </p>
+    </li>
+  </ul>
 
   <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" :autoplay="false"></audio>
   <audio ref="soundFailRef" :src="soundFail" :controls="false" :autoplay="false"></audio>
