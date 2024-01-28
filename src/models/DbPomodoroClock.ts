@@ -1,8 +1,7 @@
-import Dexie, { Table } from 'dexie';
+import Dexie, { Table, liveQuery, Observable } from 'dexie';
 import Logger from 'cpclog';
-  import { liveQuery } from "dexie";
 
-const logger = Logger.createWrapper('tag', Logger.LEVEL_DEBUG);
+const logger = Logger.createWrapper('DbPomodoroClock', Logger.LEVEL_DEBUG);
 
 export interface PomodoroHistoryItem {
   id?: number;
@@ -15,6 +14,7 @@ export class PomodoroClockDexie extends Dexie {
   pomodoroHistory!: Table<PomodoroHistoryItem>; 
 
   constructor() {
+    logger.debug('PomodoroClockDexie. constructor');
     super('PomodoroClock');
     this.version(1).stores({
       pomodoroHistory: '++id, startTsMs, durationMs'
@@ -27,7 +27,7 @@ export class PomodoroClockDexie extends Dexie {
   }
 
   get historyQueryToday(): Dexie.LiveQuery<PomodoroHistoryItem[]> {
-    logger.debug(`getHistoryToday_`);
+    logger.debug(`getHistoryToday_. enter.`);
     const todayStartTsMs = new Date().setHours(0, 0, 0, 0);
     logger.debug('getHistoryToday_. todayStartTsMs: ', todayStartTsMs);
     return liveQuery(() => this.pomodoroHistory.where('startTsMs').above(todayStartTsMs).toArray());
@@ -45,7 +45,7 @@ export class PomodoroClockDexie extends Dexie {
     }
   }
 
-  get historyQuery(): Dexie.LiveQuery<PomodoroHistoryItem[]> {
+  get historyQuery(): Observable<PomodoroHistoryItem[]> {
     logger.debug(`historyQuery_. enter.`);
     return liveQuery(() => this.pomodoroHistory.toArray());
   }

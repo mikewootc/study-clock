@@ -29,4 +29,34 @@ export default class Utils {
         const seconds = duration.getUTCSeconds().toString().padStart(2, '0');
         return `${hours}:${minutes}:${seconds}`;
     }
+
+    /**
+     * 在一个字符串中解析以#开头的标签
+     * @param {string} str 字符串
+     * @return {string[]} 返回由标签与非标签字符串组成的数组
+     *
+     * @static
+     * @memberof Utils
+     */
+    public static parseTag(str: string) {
+        let result: string[] = [];
+        let reg = /#([^#]+[\s$])/;
+        do {
+            let match = str.match(reg);
+            if (match && match.index) {
+                // 如果匹配到, 并且不是第一个字符, 则将匹配结果的index之前的子串(非tag), 和匹配结果, 依次添加到结果数组中
+                if (match.index > 0) {
+                    result.push(str.substring(0, match.index));
+                    result.push(match[0]);
+                } else {
+                    result.push(match[0]);
+                }
+                str = str.substring(match.index + match[0].length);
+            } else {
+                result.push(str);
+                break;
+            }
+        } while (str.length > 0);
+        return result;
+    }
 }

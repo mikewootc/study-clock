@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, Ref } from 'vue';
-import Assets from '@/assets';
-import { PomodoroClock } from '@/models/PomodoroClock';
-import { PomodoroHistoryItem, dbPomodoroClock } from '@/models/DbPomodoroClock';
-import Utils from '@/utils/Utils';
 import Logger from 'cpclog';
 import { useObservable } from '@vueuse/rxjs';
+
+import Assets from '@/assets';
+import Utils from '@/utils/Utils';
+import { PomodoroClock } from '@/models/PomodoroClock';
+import { PomodoroHistoryItem, dbPomodoroClock } from '@/models/DbPomodoroClock';
 import { Subscription } from 'rxjs';
+import { dbTodo } from '@/models/DbTodo';
+import TodoItemData, {TodoStatus, TodoPriority} from '@/models/TodoItemData';
+import TodoItem from '@/components/TodoItem.vue';
 
 const logger = Logger.createWrapper('tag', Logger.LEVEL_DEBUG);
 
@@ -40,6 +44,10 @@ const soundFail = Assets.sounds.fail;
 logger.debug('soundSuccess:', soundSuccess);
 const soundSuccessRef = ref<HTMLAudioElement>();
 const soundFailRef = ref<HTMLAudioElement>();
+//const lstTodos:TodoItemData[] = [
+//  { id: Date.now(), description: '吃饭', userId: 0, todoStatus: TodoStatus.TODO, todoPriority: TodoPriority.NORMAL, updatedTsMs: Date.now()},
+//  { id: Date.now() + 1, description: '睡觉', userId: 0, todoStatus: TodoStatus.DONE, todoPriority: TodoPriority.HIGH, updatedTsMs: Date.now() + 1}
+//];
 
 onMounted(() => {
   logger.debug('onMounted_. workMode:', workMode.value, dbPomodoroClock.historyQueryToday);
@@ -120,6 +128,11 @@ function clearPomodoroCnt() {
   dbPomodoroClock.clearToday();
 }
 
+function onClickAddTodo() {
+  logger.debug('onClickAddTodo_ enter.');
+  dbTodo.newTodo();
+}
+
 // 设置定时器, 每100ms更新当前时间
 setInterval(() => {
   currTimeShow24h.value = getCur24hTime();
@@ -175,6 +188,14 @@ setInterval(() => {
         </li>
       </ul>
     </div>
+
+    <el-button type="primary" @click="onClickAddTodo">+</el-button>
+      <!-- 显示lstTodos -->
+      <!-- <ul class="todo-area">
+        <li v-for="item in lstTodos" :key="item.id">
+          <TodoItem v-bind="item" />
+        </li>
+      </ul> -->
   </div>
 
   <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" :autoplay="false"></audio>
