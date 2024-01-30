@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, Ref } from 'vue';
+import { ref, onMounted, onUnmounted, Ref, provide } from 'vue';
 import Logger from 'cpclog';
 import { useObservable } from '@vueuse/rxjs';
 
@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { dbTodo } from '@/models/DbTodo';
 import TodoItemData, {TodoStatus, TodoPriority} from '@/models/TodoItemData';
 import TodoItem from '@/components/TodoItem.vue';
+import AnalogClock from '@/components/AnalogClock.vue';
 
 const logger = Logger.createWrapper('tag', Logger.LEVEL_DEBUG);
 
@@ -19,7 +20,8 @@ defineProps<{ msg: string }>()
 // 定义工作模式枚举: 正常时钟与番茄时钟
 enum WorkMode {
   Normal = 0,
-  Pomodoro = 1
+  Manual = 1,
+  Pomodoro = 2,
 };
 
 const currTimeShow24h = ref(getCur24hTime());
@@ -158,21 +160,27 @@ setInterval(() => {
   <div class="container">
     <div class="main-content">
       <div class="clock-area">
-        <!-- 根据工作模式显示不同的内容 -->
-        <div v-if="workMode === WorkMode.Normal">
-          <!-- 显示当前数字时钟, 格式为: HH:MM:SS -->
-          <!-- <p style="width: 800px; font-size: 100px; color: #333">{{ currTimeShow24h }} ^_^</p> -->
-          <p class="text-clock-time">{{ currTimeShow12h }}</p>
-          <el-button type="primary" @click="startPomodoro">开始专注</el-button>
-          <el-button type="primary" @click="clearPomodoroCnt">清零</el-button>
-        </div>
-        <div v-else>
-          <!-- 显示番茄时钟, 格式为: 25:00:00 -->
-          <p class="text-clock-time">{{ getPomodoroRemainingTimeShow() }} ^_^</p>
-          <el-button type="primary" @click="stopPomodoro">放弃专注</el-button>
-        </div>
+        <AnalogClock style="width: 400px; height: 400px" :isManualMode="workMode === WorkMode.Manual" @onClickBack="workMode = WorkMode.Normal"/>
+          <div v-if="workMode !== WorkMode.Manual">
+            <!-- 根据工作模式显示不同的内容 -->
+            <div v-if="workMode === WorkMode.Normal">
+              <!-- 显示当前数字时钟, 格式为: HH:MM:SS -->
+              <!-- <p style="width: 800px; font-size: 100px; color: #333">{{ currTimeShow24h }} ^_^</p> -->
+              <p class="text-clock-time">{{ currTimeShow12h }}</p>
+              <el-button type="primary" @click="startPomodoro">开始专注</el-button>
+              <el-button type="primary" @click="clearPomodoroCnt">清零</el-button>
+              <el-button type="primary" @click="workMode = WorkMode.Manual">手动</el-button>
+              <!-- <v-chart class="chart" :option="option" autoresize /> -->
+            </div>
+            <div v-else>
+              <!-- 显示番茄时钟, 格式为: 25:00:00 -->
+              <p class="text-clock-time">{{ getPomodoroRemainingTimeShow() }} ^_^</p>
+              <el-button type="primary" @click="stopPomodoro">放弃专注</el-button>
+            </div>
+          </div>
       </div>
 
+      <!-- 番茄钟历史 -->
       <ul class="history-area">
         <p class="text-pomodoro-cnt">
           番茄钟数: {{ pomodoroCnt }}
@@ -187,19 +195,18 @@ setInterval(() => {
           </p>
         </li>
       </ul>
-    </div>
 
-    <el-button type="primary" @click="onClickAddTodo">+</el-button>
       <!-- 显示lstTodos -->
       <!-- <ul class="todo-area">
         <li v-for="item in lstTodos" :key="item.id">
           <TodoItem v-bind="item" />
         </li>
       </ul> -->
-  </div>
+    </div>
 
-  <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" :autoplay="false"></audio>
-  <audio ref="soundFailRef" :src="soundFail" :controls="false" :autoplay="false"></audio>
+    <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" :autoplay="false"></audio>
+    <audio ref="soundFailRef" :src="soundFail" :controls="false" :autoplay="false"></audio>
+  </div>
 </template>
 
 <style scoped>
@@ -229,6 +236,12 @@ setInterval(() => {
 .clock-area {
   width: 400px;
   /* background-color: #ff0; */
+
+  /* 纵向排列, 居中 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .history-area {
@@ -263,5 +276,7 @@ setInterval(() => {
   margin: 5px;
   font-size: 1.5em;
 }
-
+.chart {
+  height: 100vh;
+}
 </style>
