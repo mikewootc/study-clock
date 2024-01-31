@@ -7,11 +7,14 @@ import Utils from '@/utils/Utils';
 import VChart, { THEME_KEY } from 'vue-echarts';
 import "echarts";
 
-const props = defineProps<{ isManualMode: boolean }>()
+const props = defineProps<{
+  isManualMode: boolean
+  showDigitalClock: boolean
+}>()
+const emit = defineEmits(['onClickBack'])
 
 const logger = Logger.createWrapper('Analog', Logger.LEVEL_DEBUG);
 
-//const timestampMs = ref(Date.now());
 // 取今天的零点
 const timestampMs = ref(dayjs().startOf('day').valueOf());
 const option = ref({
@@ -27,7 +30,7 @@ const option = ref({
       left: 'center', // 横向位置居中
       top: '35%',     // 纵向位置偏上，根据需求调整
       style: {
-        text: '00:00:00',
+        text: '',
         fontSize: 30,
         fill: '#333'
       }
@@ -245,18 +248,20 @@ onUnmounted(() => {
 
 function setAnalogClockTime(hour: number, minute: number, second: number) {
   // logger.debug('setAnalogClockTime_. enter.');
-  option.value.graphic = [
-    {
-      type: 'text',
-      left: 'center', // 横向位置居中
-      top: '35%',     // 纵向位置偏上，根据需求调整
-      style: {
-        text: '' + Math.floor(hour).toString().padStart(2, '0') + ':' + Math.floor(minute).toString().padStart(2, '0') + ':' + Math.floor(second).toString().padStart(2, '0'),
-        fontSize: 26,
-        fill: '#333'
+  if (props.showDigitalClock) {
+    option.value.graphic = [
+      {
+        type: 'text',
+        left: 'center', // 横向位置居中
+        top: '35%',     // 纵向位置偏上，根据需求调整
+        style: {
+          text: '' + Math.floor(hour).toString().padStart(2, '0') + ':' + Math.floor(minute).toString().padStart(2, '0') + ':' + Math.floor(second).toString().padStart(2, '0'),
+          fontSize: 26,
+          fill: '#333'
+        }
       }
-    }
-  ];
+    ];
+  }
   option.value.series = [
     {
       name: 'hour',
@@ -289,6 +294,24 @@ function onClickAddMinutes(minutes:number) {
   setAnalogClockTime(hour, minute, second);
 }
 
+function onClickBack() {
+  // 将数字时钟设为空串
+  option.value.graphic = [
+    {
+      type: 'text',
+      left: 'center', // 横向位置居中
+      top: '35%',     // 纵向位置偏上，根据需求调整
+      style: {
+        text: '',
+        fontSize: 26,
+        fill: '#333'
+      }
+    }
+  ];
+
+  emit('onClickBack');
+}
+
 </script>
 
 <template>
@@ -299,7 +322,7 @@ function onClickAddMinutes(minutes:number) {
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(-5)">-5</el-button>
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(-1)">-1</el-button>
 
-    <el-button v-if="isManualMode" type="primary" @click="$emit('onClickBack')">返回</el-button>
+    <el-button v-if="isManualMode" type="primary" @click="onClickBack">返回</el-button>
 
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(1)">+1</el-button>
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(5)">+5</el-button>

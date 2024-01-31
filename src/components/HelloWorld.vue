@@ -160,7 +160,11 @@ setInterval(() => {
   <div class="container">
     <div class="main-content">
       <div class="clock-area">
-        <AnalogClock style="width: 400px; height: 400px" :isManualMode="workMode === WorkMode.Manual" @onClickBack="workMode = WorkMode.Normal"/>
+        <AnalogClock style="width: 400px; height: 400px"
+          :isManualMode="workMode === WorkMode.Manual"
+          :showDigitalClock="workMode === WorkMode.Manual"
+          @onClickBack="workMode = WorkMode.Normal"
+        />
           <div v-if="workMode !== WorkMode.Manual">
             <!-- 根据工作模式显示不同的内容 -->
             <div v-if="workMode === WorkMode.Normal">
