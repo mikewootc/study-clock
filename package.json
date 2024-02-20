@@ -10,10 +10,13 @@
     "buildf": "vite build",
     "preview": "vite preview",
     "ionic:build": "npm run buildf",
-    "ionic:serve": "npm run dev"
+    "ionic:serve": "npm run dev",
+    "ionic:sync": "npx cap sync",
+    "ionic:rl": "cd android && gradlew :app:assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^5.6.0",
+    "@vitejs/plugin-legacy": "^5.3.0",
     "cpclog": "^1.0.20",
     "echarts": "^5.4.3",
     "element-plus": "^2.4.3",
