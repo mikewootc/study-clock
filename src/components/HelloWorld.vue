@@ -12,6 +12,7 @@ import { dbTodo } from '@/models/DbTodo';
 import TodoItemData, {TodoStatus, TodoPriority} from '@/models/TodoItemData';
 import TodoItem from '@/components/TodoItem.vue';
 import AnalogClock from '@/components/AnalogClock.vue';
+import NoSleep from 'nosleep.js';
 
 const logger = Logger.createWrapper('tag', Logger.LEVEL_DEBUG);
 
@@ -24,6 +25,7 @@ enum WorkMode {
   Pomodoro = 2,
 };
 
+const noSleep = new NoSleep();
 const currTimeShow24h = ref(getCur24hTime());
 const currTimeShow12h = ref(getCur12hTime());
 const workMode = ref(WorkMode.Normal);
@@ -135,6 +137,11 @@ function onClickAddTodo() {
   dbTodo.newTodo();
 }
 
+function onClickStayAwake() {
+  logger.debug('onClickStayAwake_ enter.', noSleep.enable);
+  noSleep.enable();
+}
+
 // 设置定时器, 每100ms更新当前时间
 setInterval(() => {
   currTimeShow24h.value = getCur24hTime();
@@ -160,7 +167,7 @@ setInterval(() => {
   <div class="container">
     <div class="main-content">
       <div class="clock-area">
-        <AnalogClock style="width: 400px; height: 400px"
+        <AnalogClock style="width: 300px; height: 300px"
           :isManualMode="workMode === WorkMode.Manual"
           :showDigitalClock="workMode === WorkMode.Manual"
           @onClickBack="workMode = WorkMode.Normal"
@@ -183,6 +190,8 @@ setInterval(() => {
             </div>
           </div>
       </div>
+
+      <el-button type="primary" @click="onClickStayAwake">常亮</el-button>
 
       <!-- 番茄钟历史 -->
       <ul class="history-area">
