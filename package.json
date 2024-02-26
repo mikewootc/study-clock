@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "devl": "vite --host 0.0.0.0",
-    "build": "vue-tsc && vite build",
-    "buildf": "vite build",
+    "org_build": "vue-tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
-    "ionic:build": "npm run buildf",
+    "deploy": "bash ./deploy.sh",
+    "ionic:build": "npm run build",
     "ionic:serve": "npm run dev",
     "ionic:sync": "npx cap sync",
     "ionic:apk": "npx cap sync && cd android && gradlew :app:assembleDebug"
