@@ -46,15 +46,18 @@ const option = ref({
       max: 12,
       splitNumber: 12,
       clockwise: true,
+      // Outline border
       axisLine: {
         lineStyle: {
-          width: 15,
+          width: 5,
           color: [[1, 'rgba(0,0,0,0.7)']],
           shadowColor: 'rgba(0, 0, 0, 0.5)',
           shadowBlur: 15
         }
       },
+      // Hour tick line
       splitLine: {
+        distance: 20,
         lineStyle: {
           shadowColor: 'rgba(0, 0, 0, 0.3)',
           shadowBlur: 3,
@@ -62,9 +65,17 @@ const option = ref({
           shadowOffsetY: 2
         }
       },
+      // Minute tick line
+      axisTick: {
+        distance: 20,
+        lineStyle: {
+          shadowColor: 'rgba(0, 0, 0, 0.3)',
+        },
+      },
+      // Hour number
       axisLabel: {
-        fontSize: 30,
-        distance: 25,
+        fontSize: 25,
+        distance: 10,
         formatter: function (value) {
           if (value === 0) {
             return '';
@@ -108,6 +119,41 @@ const option = ref({
         }
       ]
     },
+    //{
+    //  name: 'hour24number',
+    //  type: 'gauge',
+    //  startAngle: 90,
+    //  endAngle: -270,
+    //  min: 0,
+    //  max: 12,
+    //  splitNumber: 12,
+    //  clockwise: true,
+    //  // Outline border
+    //  axisLine: {
+    //    show: false,
+    //  },
+    //  // Hour tick line
+    //  splitLine: {
+    //    show: false,
+    //  },
+    //  // Minute tick line
+    //  axisTick: {
+    //    show: false,
+    //  },
+    //  // Hour number
+    //  axisLabel: {
+    //    show: false,
+    //    fontSize: 15,
+    //    distance: 50,
+    //    color: 'gray',
+    //    formatter: function (value) {
+    //      if (value === 0) {
+    //        return '';
+    //      }
+    //      return value + 12 + '';
+    //    }
+    //  },
+    //},
     {
       name: 'minute',
       type: 'gauge',
@@ -115,6 +161,7 @@ const option = ref({
       endAngle: -270,
       min: 0,
       max: 60,
+      splitNumber: 12,
       clockwise: true,
       axisLine: {
         show: false
@@ -125,8 +172,19 @@ const option = ref({
       axisTick: {
         show: false
       },
+      // Minute number
       axisLabel: {
-        show: false
+        show: true,
+        interval: 5,
+        distance: -12,
+        showMaxLabel: false,
+        color: 'gray',
+        formatter: function (value) {
+          if (value === 60) {
+            return '';
+          }
+          return value + '';
+        },
       },
       pointer: {
         icon: 'path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z',
@@ -315,7 +373,7 @@ function onClickBack() {
 </script>
 
 <template>
-  <div class="container" style="min-width: 500px; min-height: 500px;">
+  <div class="container" style="min-width: 400px; min-height: 400px;">
     <v-chart class="chart" :option="option" autoresize />
 
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(-60)">-60</el-button>

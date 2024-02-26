@@ -167,7 +167,7 @@ setInterval(() => {
   <div class="container">
     <div class="main-content">
       <div class="clock-area">
-        <AnalogClock style="width: 300px; height: 300px"
+        <AnalogClock style="width: 400px; height: 400px"
           :isManualMode="workMode === WorkMode.Manual"
           :showDigitalClock="workMode === WorkMode.Manual"
           @onClickBack="workMode = WorkMode.Normal"
