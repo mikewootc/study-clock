@@ -18,12 +18,6 @@ const logger = Logger.createWrapper('Analog', Logger.LEVEL_DEBUG);
 // 取今天的零点
 const timestampMs = ref(dayjs().startOf('day').valueOf());
 const option = ref({
-  grid: {
-      left: '0%', //默认10%
-      right: '0%', //默认10%
-      bottom: '0%', //默认60
-      containLabel: true //grid区域是否包含坐标轴的刻度标签
-  },
   graphic: [
     {
       type: 'text',
@@ -40,6 +34,7 @@ const option = ref({
     {
       name: 'hour',
       type: 'gauge',
+      radius: '95%',
       startAngle: 90,
       endAngle: -270,
       min: 0,
@@ -157,6 +152,7 @@ const option = ref({
     {
       name: 'minute',
       type: 'gauge',
+      radius: '95%',
       startAngle: 90,
       endAngle: -270,
       min: 0,
@@ -373,8 +369,8 @@ function onClickBack() {
 </script>
 
 <template>
-  <div class="container" style="min-width: 400px; min-height: 400px;">
-    <v-chart class="chart" :option="option" autoresize />
+  <div class="container" style="min-width: 360px; min-height: 360px;">
+    <v-chart class="chart" style="background-color: #0ff;" :option="option" autoresize />
 
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(-60)">-60</el-button>
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(-5)">-5</el-button>

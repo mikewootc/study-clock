@@ -167,15 +167,58 @@ setInterval(() => {
   <div class="container">
     <div class="main-content">
       <div class="clock-area">
-        <AnalogClock style="width: 100%; height: 100%"
+        <AnalogClock style="width: 400px; height: 400px"
           :isManualMode="workMode === WorkMode.Manual"
           :showDigitalClock="workMode === WorkMode.Manual"
           @onClickBack="workMode = WorkMode.Normal"
         />
+          <div v-if="workMode !== WorkMode.Manual">
+            <!-- 根据工作模式显示不同的内容 -->
+            <div v-if="workMode === WorkMode.Normal">
+              <!-- 显示当前数字时钟, 格式为: HH:MM:SS -->
+              <!-- <p style="width: 800px; font-size: 100px; color: #333">{{ currTimeShow24h }} ^_^</p> -->
+              <p class="text-clock-time">{{ currTimeShow12h }}</p>
+              <el-button type="primary" @click="startPomodoro">开始专注</el-button>
+              <el-button type="primary" @click="clearPomodoroCnt">清零</el-button>
+              <el-button type="primary" @click="workMode = WorkMode.Manual">手动</el-button>
+              <!-- <v-chart class="chart" :option="option" autoresize /> -->
+            </div>
+            <div v-else>
+              <!-- 显示番茄时钟, 格式为: 25:00:00 -->
+              <p class="text-clock-time">{{ getPomodoroRemainingTimeShow() }} ^_^</p>
+              <el-button type="primary" @click="stopPomodoro">放弃专注</el-button>
+            </div>
+          </div>
       </div>
 
-      <el-button type="primary" style="position: absolute; bottom: 5px; right: 5px;" @click="onClickStayAwake">常亮</el-button>
+      <el-button type="primary" @click="onClickStayAwake">常亮</el-button>
+
+      <!-- 番茄钟历史 -->
+      <ul class="history-area">
+        <p class="text-pomodoro-cnt">
+          番茄钟数: {{ pomodoroCnt }}
+        </p>
+        <p class="text-pomodoro-cnt">
+          总时长 {{ Utils.getDurationString(pomodoroTotalTimeMs) }}
+        </p>
+        <li v-for="item in pomodoroHistory" :key="item.id">
+          <p style=" margin: 0; padding: 0">
+            开始时间: {{ Utils.getTimeString(item.startTsMs) }}, 
+            时长: {{ Math.floor(item.durationMs / 1000 / 60) }} 分钟
+          </p>
+        </li>
+      </ul>
+
+      <!-- 显示lstTodos -->
+      <!-- <ul class="todo-area">
+        <li v-for="item in lstTodos" :key="item.id">
+          <TodoItem v-bind="item" />
+        </li>
+      </ul> -->
     </div>
+
+    <audio ref="soundSuccessRef" :src="soundSuccess" :controls="false" :autoplay="false"></audio>
+    <audio ref="soundFailRef" :src="soundFail" :controls="false" :autoplay="false"></audio>
   </div>
 </template>
 
@@ -204,9 +247,8 @@ setInterval(() => {
 }
 
 .clock-area {
-  width: 100%;
-  height: 100%;
-  background-color: #ff0;
+  width: 400px;
+  /* background-color: #ff0; */
 
   /* 纵向排列, 居中 */
   display: flex;
