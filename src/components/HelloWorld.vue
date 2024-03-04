@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, Ref, provide } from 'vue';
 import Logger from 'cpclog';
-import { useObservable } from '@vueuse/rxjs';
+// import { useObservable } from '@vueuse/rxjs';
 
-import Assets from '@/assets';
+// import Assets from '@/assets';
 import Utils from '@/utils/Utils';
-import { PomodoroClock } from '@/models/PomodoroClock';
-import { PomodoroHistoryItem, dbPomodoroClock } from '@/models/DbPomodoroClock';
-import { Subscription } from 'rxjs';
-import { dbTodo } from '@/models/DbTodo';
-import TodoItemData, {TodoStatus, TodoPriority} from '@/models/TodoItemData';
-import TodoItem from '@/components/TodoItem.vue';
+// import { Subscription } from 'rxjs';
 import AnalogClock from '@/components/AnalogClock.vue';
 import NoSleep from 'nosleep.js';
 
@@ -22,52 +17,18 @@ defineProps<{ msg: string }>()
 enum WorkMode {
   Normal = 0,
   Manual = 1,
-  Pomodoro = 2,
 };
 
 const noSleep = new NoSleep();
 const currTimeShow24h = ref(getCur24hTime());
 const currTimeShow12h = ref(getCur12hTime());
 const workMode = ref(WorkMode.Normal);
-
-// 每个番茄钟时长
-const pomodoroDurationSec = 15 * 60;
-//const pomodoroStartTimeStampMs = ref(0);
-const pomodoroRemainingTimeMs = ref(0);
-let pomodoroClock:PomodoroClock|null = null;
-const pomodoroHistory:Ref<PomodoroHistoryItem[]> = useObservable(
-  //dbPomodoroClock.historyQuery
-  dbPomodoroClock.historyQueryToday
-);
-let pomodoroHistorySubscription:Subscription|null = null;
-const pomodoroCnt = ref(0);
-const pomodoroTotalTimeMs = ref(0);
-
-const soundSuccess = Assets.sounds.success;
-const soundFail = Assets.sounds.fail;
-logger.debug('soundSuccess:', soundSuccess);
-const soundSuccessRef = ref<HTMLAudioElement>();
-const soundFailRef = ref<HTMLAudioElement>();
-//const lstTodos:TodoItemData[] = [
-//  { id: Date.now(), description: '吃饭', userId: 0, todoStatus: TodoStatus.TODO, todoPriority: TodoPriority.NORMAL, updatedTsMs: Date.now()},
-//  { id: Date.now() + 1, description: '睡觉', userId: 0, todoStatus: TodoStatus.DONE, todoPriority: TodoPriority.HIGH, updatedTsMs: Date.now() + 1}
-//];
+const darkMode = ref(false);
 
 onMounted(() => {
-  logger.debug('onMounted_. workMode:', workMode.value, dbPomodoroClock.historyQueryToday);
-  pomodoroHistorySubscription = dbPomodoroClock.historyQueryToday.subscribe((history:PomodoroHistoryItem[]) => {
-    if (history) {
-      logger.debug('historyQueryToday got subscription. history:', history);
-      pomodoroCnt.value = history.length;
-      pomodoroTotalTimeMs.value = history.reduce((acc, cur) => acc + cur.durationMs, 0);
-    }
-  });
 });
 
 onUnmounted(() => {
-  if (pomodoroHistorySubscription) {
-    pomodoroHistorySubscription.unsubscribe();
-  }
 });
 
 
@@ -95,46 +56,8 @@ function setWorkMode(mode: WorkMode) {
   workMode.value = mode;
 }
 
-// 开始番茄钟
-function startPomodoro() {
-  pomodoroClock = new PomodoroClock(Date.now(), pomodoroDurationSec * 1000);
-  // 计算剩余时间
-  pomodoroRemainingTimeMs.value = pomodoroClock.getRemainingTimeMs();
-  setWorkMode(WorkMode.Pomodoro);
-}
-
-// 停止番茄钟
-function stopPomodoro() {
-  setWorkMode(WorkMode.Normal);
-  soundFailRef.value?.play();
-  //if (soundSuccessRef.value) {
-  //  soundSuccessRef.value.pause();
-  //  soundSuccessRef.value.currentTime = 0;
-  //}
-}
-
-// 获取番茄钟剩余时间, 格式为: MM:SS
-function getPomodoroRemainingTimeShow() {
-  if (workMode.value === WorkMode.Pomodoro) {
-    const remainingTimeMs = pomodoroRemainingTimeMs.value;
-    //console.log('remainingTimeMs:', remainingTimeMs);
-    const remainingTimeAllSeconds = Math.floor(remainingTimeMs / 1000);
-    const remainingTimeMinutes = Math.floor(remainingTimeAllSeconds / 60);
-    const remainingTimeSeconds = remainingTimeAllSeconds % 60;
-    return `${('0' + remainingTimeMinutes).slice(-2)}:${('0' + remainingTimeSeconds).slice(-2)}`;
-  } else {
-    return '';
-  }
-}
-
-function clearPomodoroCnt() {
-  logger.debug('clearPomodoroCnt_ enter.');
-  dbPomodoroClock.clearToday();
-}
-
-function onClickAddTodo() {
-  logger.debug('onClickAddTodo_ enter.');
-  dbTodo.newTodo();
+function toggleDarkMode() {
+  darkMode.value = !darkMode.value;
 }
 
 function onClickStayAwake() {
@@ -146,19 +69,6 @@ function onClickStayAwake() {
 setInterval(() => {
   currTimeShow24h.value = getCur24hTime();
   currTimeShow12h.value = getCur12hTime();
-  
-  if (workMode.value === WorkMode.Pomodoro) {
-    pomodoroRemainingTimeMs.value = pomodoroClock ? pomodoroClock.getRemainingTimeMs() : 0;
-    //logger.debug('pomodoroRemainingTimeMs:', pomodoroRemainingTimeMs.value);
-    if (pomodoroRemainingTimeMs.value <= 0) {
-      // 番茄钟时间到
-      setWorkMode(WorkMode.Normal);
-      if (pomodoroClock) {
-        dbPomodoroClock.addPomodoroHistoryItem({startTsMs: pomodoroClock.startTsMs, durationMs: pomodoroClock.durationMs});
-      }
-      soundSuccessRef.value?.play();
-    }
-  }
 }, 100);
 
 </script>
@@ -171,10 +81,12 @@ setInterval(() => {
           :isManualMode="workMode === WorkMode.Manual"
           :showDigitalClock="workMode === WorkMode.Manual"
           @onClickBack="workMode = WorkMode.Normal"
+          :darkMode="darkMode"
         />
       </div>
 
       <el-button type="primary" style="position: absolute; bottom: 5px; right: 5px;" @click="onClickStayAwake">常亮</el-button>
+      <el-button type="primary" style="position: absolute; top: 5px; right: 5px;" @click="toggleDarkMode">{{darkMode ? 'Light' : 'Dark'}}</el-button>
     </div>
   </div>
 </template>
@@ -206,7 +118,7 @@ setInterval(() => {
 .clock-area {
   width: 100%;
   height: 100%;
-  background-color: #ff0;
+  /* background-color: #ff0; */
 
   /* 纵向排列, 居中 */
   display: flex;
