@@ -9,14 +9,15 @@ import "echarts";
 
 const logger = Logger.createWrapper('Analog', Logger.LEVEL_DEBUG);
 
-interface ColorMode {
+/** Types and Constants ===================================================== */
+interface IAnalogClockTheme {
   backgroundColor: string;
   clockForegroundColor: string;
   clockShadowColor: string;
   clockPointerColor: string;
 };
 
-const DicColorModes: {light: ColorMode, dark: ColorMode} = {
+const AnalogClockThemes: {light: IAnalogClockTheme, dark: IAnalogClockTheme} = {
   light: {
     backgroundColor: '#F0F0F0',
     clockForegroundColor: 'rgba(0,0,0,0.7)',
@@ -31,23 +32,40 @@ const DicColorModes: {light: ColorMode, dark: ColorMode} = {
   }
 }
 
+/** Props =================================================================== */
 const props = defineProps<{
   isManualMode: boolean,
   showDigitalClock: boolean,
-  darkMode?: boolean,
+  themeMode?: String,
 }>()
 const emit = defineEmits(['onClickBack'])
 
-let colorMode = computed(() => {
-  let mode = props.darkMode ? DicColorModes.dark : DicColorModes.light;
-  console.log('colorMode:', mode);
-  return mode;
+/** States ================================================================== */
+let autoDark: Ref<boolean> = ref(false);
+let colorTheme = computed(() => {
+  let t = AnalogClockThemes.light;
+
+  switch (props.themeMode) {
+    case 'light':
+      t = AnalogClockThemes.light;
+      break;
+  
+    case 'dark':
+      t = AnalogClockThemes.dark;
+      break;
+  
+    default:
+      t = autoDark.value ? AnalogClockThemes.dark : AnalogClockThemes.light;
+      break;
+  }
+
+  console.log('colorTheme:', t, 'autoDark:', autoDark.value);
+  return t;
 })
 
 // 取今天的零点
 const timestampMs = ref(dayjs().startOf('day').valueOf());
 const option = ref(getOption());
-
 function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
   let digitalClockText = ''
   if (props.showDigitalClock) {
@@ -84,9 +102,9 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           lineStyle: {
             width: 5,
             // color: [[1, 'rgba(0,0,0,0.7)']],
-            color: [[1, colorMode.value.clockForegroundColor]],
+            color: [[1, colorTheme.value.clockForegroundColor]],
             // shadowColor: 'rgba(0, 0, 0, 0.5)',
-            shadowColor: colorMode.value.clockShadowColor,
+            shadowColor: colorTheme.value.clockShadowColor,
             shadowBlur: 15
           }
         },
@@ -95,8 +113,8 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           distance: 20,
           lineStyle: {
             // shadowColor: 'rgba(0, 0, 0, 0.3)',
-            color: colorMode.value.clockForegroundColor,
-            shadowColor: colorMode.value.clockShadowColor,
+            color: colorTheme.value.clockForegroundColor,
+            shadowColor: colorTheme.value.clockShadowColor,
             shadowBlur: 3,
             shadowOffsetX: 1,
             shadowOffsetY: 2
@@ -106,14 +124,14 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
         axisTick: {
           distance: 20,
           lineStyle: {
-            color: colorMode.value.clockForegroundColor,
-            shadowColor: colorMode.value.clockShadowColor,
+            color: colorTheme.value.clockForegroundColor,
+            shadowColor: colorTheme.value.clockShadowColor,
           },
         },
         // Hour number
         axisLabel: {
           fontSize: 25,
-          color: colorMode.value.clockForegroundColor,
+          color: colorTheme.value.clockForegroundColor,
           distance: 10,
           formatter: function (value) {
             if (value === 0) {
@@ -141,7 +159,7 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           length: '55%',
           offsetCenter: [0, '8%'],
           itemStyle: {
-            color: colorMode.value.clockPointerColor,
+            color: colorTheme.value.clockPointerColor,
             shadowColor: 'rgba(0, 0, 0, 0.3)',
             shadowBlur: 8,
             shadowOffsetX: 2,
@@ -237,7 +255,7 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           offsetCenter: [0, '8%'],
           itemStyle: {
             // color: '#C0911F',
-            color: colorMode.value.clockPointerColor,
+            color: colorTheme.value.clockPointerColor,
             shadowColor: 'rgba(0, 0, 0, 0.3)',
             shadowBlur: 8,
             shadowOffsetX: 2,
@@ -251,7 +269,7 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           itemStyle: {
             borderWidth: 15,
             // borderColor: '#C0911F',
-            borderColor: colorMode.value.clockPointerColor,
+            borderColor: colorTheme.value.clockPointerColor,
             shadowColor: 'rgba(0, 0, 0, 0.3)',
             shadowBlur: 8,
             shadowOffsetX: 2,
@@ -299,7 +317,7 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           offsetCenter: [0, '8%'],
           itemStyle: {
             // color: '#C0911F',
-            color: colorMode.value.clockPointerColor,
+            color: colorTheme.value.clockPointerColor,
             shadowColor: 'rgba(0, 0, 0, 0.3)',
             shadowBlur: 8,
             shadowOffsetX: 2,
@@ -312,7 +330,7 @@ function getOption(hour: number = 0, minute: number = 0, second: number = 0) {
           showAbove: true,
           itemStyle: {
             // color: '#C0911F',
-            color: colorMode.value.clockPointerColor,
+            color: colorTheme.value.clockPointerColor,
             shadowColor: 'rgba(0, 0, 0, 0.3)',
             shadowBlur: 8,
             shadowOffsetX: 2,
@@ -351,6 +369,22 @@ onMounted(() => {
   setInterval(function () {
     if (!props.isManualMode) {
       let time = getCurrTimeSection();
+
+      //logger.debug('onMounted() callback_. autoDark:', autoDark.value);
+      let d = new Date();
+      let hour24 = d.getHours();
+      if ((hour24>= 20 /*&& time[1] >= 31*/) || hour24 < 6)  {
+        if (!autoDark.value) {
+          logger.debug('onMounted() callback_. to dark');
+          autoDark.value = true;
+        }
+      } else {
+        if (autoDark.value) {
+          logger.debug('onMounted() callback_. to light');
+          autoDark.value = false;
+        }
+      }
+
       setAnalogClockTime(...time);
     }
   }, 1000);
@@ -429,7 +463,7 @@ function onClickBack() {
 </script>
 
 <template>
-  <div class="container" style="min-width: 360px; min-height: 360px;" :style="{backgroundColor: colorMode.backgroundColor}">
+  <div class="container" style="min-width: 360px; min-height: 360px;" :style="{backgroundColor: colorTheme.backgroundColor}">
     <v-chart class="chart" :option="option" autoresize />
 
     <el-button v-if="isManualMode" type="primary" @click="onClickAddMinutes(-60)">-60</el-button>

@@ -23,7 +23,7 @@ const noSleep = new NoSleep();
 const currTimeShow24h = ref(getCur24hTime());
 const currTimeShow12h = ref(getCur12hTime());
 const workMode = ref(WorkMode.Normal);
-const darkMode = ref(false);
+const themeMode = ref('Light');
 
 onMounted(() => {
 });
@@ -57,7 +57,14 @@ function setWorkMode(mode: WorkMode) {
 }
 
 function toggleDarkMode() {
-  darkMode.value = !darkMode.value;
+  // 在 'Light', 'Dark', 'Auto' 之间切换
+  if (themeMode.value === 'Light') {
+    themeMode.value = 'Dark';
+  } else if (themeMode.value === 'Dark') {
+    themeMode.value = 'Auto';
+  } else {
+    themeMode.value = 'Light';
+  }
 }
 
 function onClickStayAwake() {
@@ -81,12 +88,12 @@ setInterval(() => {
           :isManualMode="workMode === WorkMode.Manual"
           :showDigitalClock="workMode === WorkMode.Manual"
           @onClickBack="workMode = WorkMode.Normal"
-          :darkMode="darkMode"
+          :themeMode="themeMode.toLowerCase()"
         />
       </div>
 
       <el-button type="primary" style="position: absolute; bottom: 5px; right: 5px;" @click="onClickStayAwake">常亮</el-button>
-      <el-button type="primary" style="position: absolute; top: 5px; right: 5px;" @click="toggleDarkMode">{{darkMode ? 'Light' : 'Dark'}}</el-button>
+      <el-button type="primary" style="position: absolute; top: 5px; right: 5px;" @click="toggleDarkMode">{{themeMode}}</el-button>
     </div>
   </div>
 </template>
